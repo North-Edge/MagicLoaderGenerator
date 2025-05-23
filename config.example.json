@@ -1,0 +1,36 @@
+{
+  "ModDirectoryStructure": "OblivionRemastered\\Content\\Dev\\ObvData\\Data\\MagicLoader\\",
+  "OutputDirectory": "MagicLoader",
+
+  "LocalizationSource": "Localization",
+  "IncludedSections": [ "ST_FullNames" ],
+  "Languages": [
+    "de",
+    "en",
+    "es",
+    "fr",
+    "it",
+    "ja",
+    "pl",
+    "pt",
+    "ru",
+    "zh-Hans"
+  ],
+
+  "ModName": "MagicLoaderMod",
+  "ModFiles": {
+    "MagicLoaderModFirstModFile.json": {
+      "FullNamesEditEntries": [
+        "LOC_FN_MQ02JauffreD2"
+      ]
+    },
+    "MagicLoaderModSecondModFile.json": {
+      "FullNamesEditEntries": [
+        "LOC_FN_MQ02JauffreD2"
+      ],
+      "FullNameEntries": [
+        "LOC_FN_Miscarcand01"
+      ]
+    }
+  }
+}

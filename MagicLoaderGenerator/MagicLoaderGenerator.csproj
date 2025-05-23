@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+		<Authors>North-Edge</Authors>
+		<PackageId>NorthEdge.MagicLoaderGenerator</PackageId>
+		<PackageReadmeFile>readme.md</PackageReadmeFile>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <Title>MagicLoader translation generator</Title>
+        <Description>This library generates files to be used by MagicLoader in order to mod Oblivion: Remastered</Description>
+        <PackageProjectUrl>https://github.com/North-Edge/MagicLoaderGenerator</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/North-Edge/MagicLoaderGenerator</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Version>1.1.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.5" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../readme.md" Visible="false" Pack="true" PackagePath="" />
+        <None Include="../LICENSE" Visible="false" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+</Project>
