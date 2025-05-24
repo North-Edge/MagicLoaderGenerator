@@ -5,23 +5,19 @@ namespace MagicLoaderGenerator.Localization.Providers;
 /// <summary>
 /// Base implementation of the <see cref="ILocalizationProvider"/> interface
 /// </summary>
-/// <param name="configuration">the localization configuration</param>
-public abstract class BaseLocalizationProvider(ILocalizationConfiguration configuration) : ILocalizationProvider
+public abstract class BaseLocalizationProvider : ILocalizationProvider
 {
     /// <summary>
     /// The source of  the localization data (could be a directory or database connection string).
     /// If no value is specified, the localization data is assumed to be located in the default directory.
     /// </summary>
-    protected readonly string LocalizationSource = configuration.LocalizationSource ?? DefaultDirectory;
+    protected readonly string LocalizationSource;
     /// <summary>
     /// The default directory relative to the working directory of the executable
     /// </summary>
     private const string DefaultDirectory = "Localization";
-    // ReSharper disable once MemberCanBePrivate.Global
-    /// <summary>
-    /// The prefix for fullname translation keys
-    /// </summary>
-    public const string FullnamePrefix = "LOC_FN_";
+    /// <inheritdoc/>
+    public string FullNamePrefix => "LOC_FN_";
     /// <summary>
     /// A list of the default languages
     /// </summary>
@@ -42,24 +38,42 @@ public abstract class BaseLocalizationProvider(ILocalizationConfiguration config
     /// </summary>
     protected readonly Dictionary<string, Dictionary<string, string>> LocalizationStrings = new();
     /// <inheritdoc/>
-    public virtual List<string> SupportedLanguages => configuration.Languages ?? DefaultLanguages;
+    public Dictionary<string, Dictionary<string, string>> ExtraLocalizationStrings { get; init; } = new();
+    /// <summary>
+    /// The localization configuration
+    /// </summary>
+    private readonly ILocalizationConfiguration _configuration;
+
+    /// <summary>
+    /// Base implementation of the <see cref="ILocalizationProvider"/> interface
+    /// </summary>
+    /// <param name="configuration">the localization configuration</param>
+    protected BaseLocalizationProvider(ILocalizationConfiguration configuration)
+    {
+        _configuration = configuration;
+        LoadLocalizationFromConfig(_configuration);
+        LocalizationSource = _configuration.LocalizationSource ?? DefaultDirectory;
+    }
 
     /// <inheritdoc/>
-    public virtual string GetValueOrDefault(string language, string key, string defaultValue)
+    public virtual List<string> SupportedLanguages => _configuration.Languages ?? DefaultLanguages;
+
+    /// <inheritdoc/>
+    public virtual string? GetValueOrDefault(string language, string key, string? defaultValue = null)
     {
-        // forward the translation to the default game localization for fullname localization strings
-        if (IsBaseLanguage(language) && key.StartsWith(FullnamePrefix))
-        {
-            return defaultValue;
-        }
         // retrieve the localization strings for the current language
         if (LocalizationStrings.TryGetValue(language, out var locStrings) == false)
         {
             // load the localization data for the current language
-            locStrings = LoadLocalization(language, configuration.IncludedSections);
+            locStrings = LoadLocalization(language, _configuration.IncludedSections);
         }
         // retrieve the translated data
-        return locStrings?.GetValueOrDefault(key, defaultValue) ?? defaultValue;
+        if (locStrings != null && locStrings.TryGetValue(key, out var result))
+            return result;
+
+        // if the localization wasn't found, check the extra localization data
+        return ExtraLocalizationStrings.TryGetValue(language, out locStrings)
+             ? locStrings.GetValueOrDefault(key) : defaultValue;
     }
 
     /// <summary>
@@ -67,7 +81,28 @@ public abstract class BaseLocalizationProvider(ILocalizationConfiguration config
     /// </summary>
     /// <param name="language">the language to check</param>
     /// <returns><c>true</c> if the specified language is the base language, <c>false</c> otherwise</returns>
-    private static bool IsBaseLanguage(string language) => language == LanguagesEnum.English;
+    public static bool IsBaseLanguage(string language) => language == LanguagesEnum.English;
+
+    /// <summary>
+    /// Loads the project specific localization strings from the configuration
+    /// </summary>
+    /// <param name="configuration">the configuration containing the localization data</param>
+    private void LoadLocalizationFromConfig(ILocalizationConfiguration configuration)
+    {
+        foreach (var (key, localizations)  in configuration.Localizations)
+        {
+            foreach (var (language, localization) in localizations)
+            {
+                if (ExtraLocalizationStrings.TryGetValue(language, out var languageLocStrings) == false)
+                {
+                    languageLocStrings = new Dictionary<string, string>();
+                    ExtraLocalizationStrings[language] = languageLocStrings;
+                }
+
+                languageLocStrings[key] = localization;
+            }
+        }
+    }
 
     /// <summary>
     /// Loads the localization data for the specified languages

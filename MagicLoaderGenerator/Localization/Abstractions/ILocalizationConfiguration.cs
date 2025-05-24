@@ -20,4 +20,11 @@ public interface ILocalizationConfiguration: IFileSystemConfiguration
     /// Could be directory or connection string to a database, for instance.
     /// </summary>
     public string? LocalizationSource { get; }
+    /// <summary>
+    /// Extra localization data specific to the mod.
+    /// The keys are the localization keys and, they *must* start with <c>LOC_FN_</c>.
+    /// The values are dictionaries with the language codes as keys (see <see cref="LanguagesEnum"/>)
+    /// and the translation as values.
+    /// </summary>
+    public Dictionary<string, Dictionary<string, string>> Localizations { get; }
 }

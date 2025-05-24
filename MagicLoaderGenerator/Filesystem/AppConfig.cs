@@ -13,6 +13,7 @@ namespace MagicLoaderGenerator.Filesystem;
 /// </summary>
 public record AppConfig: ILocalizationConfiguration, IModConfiguration
 {
+    // ReSharper disable once MemberCanBeProtected.Global
     /// <summary>
     /// Constructor used to bind the configuration to the record
     /// </summary>
@@ -44,5 +45,7 @@ public record AppConfig: ILocalizationConfiguration, IModConfiguration
     public virtual List<string>? IncludedSections { get; init; } = [ "ST_FullNames" ];
     /// <inheritdoc/>
     public virtual string? LocalizationSource { get; init; } = "Localization";
+    /// <inheritdoc/>
+    public Dictionary<string, Dictionary<string, string>> Localizations { get; init; } = [];
 #endregion
 }
