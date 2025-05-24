@@ -5,6 +5,8 @@ using MagicLoaderGenerator.Filesystem;
 
 namespace MagicLoaderGenerator;
 
+using FileTransforms = Dictionary<string, IMagicLoaderFileTransform?>;
+
 // ReSharper disable once UnusedType.Global
 /// <summary>
 /// Default implementation for a simple mod to generate translation files
@@ -23,12 +25,27 @@ public class MagicLoaderMod(ILocalizationProvider localization, AppConfig config
     /// (the <see cref="TranslateFileTransform"/> implementation is used by default)
     /// </param>
     /// <param name="cleanOutput">flag specifying if the output directory should be clean before generating files</param>
-    /// <returns></returns>
+    /// <returns>the output directory</returns>
     public string Generate(IModOutputGenerator outputGenerator, IMagicLoaderFileTransform? fileTransform = null, bool cleanOutput = true)
     {
+        return Generate(outputGenerator, new FileTransforms {{ "", fileTransform }}, cleanOutput);
+    }
+
+    // ReSharper disable once MemberCanBePrivate.Global
+    /// <summary>
+    /// Generate the translation files for the mod using the specified generator
+    /// </summary>
+    /// <param name="outputGenerator">an implementation of the <see cref="IModOutputGenerator"/> interface</param>
+    /// <param name="fileTransforms">
+    /// a set of implementations of the <see cref="IMagicLoaderFileTransform"/> interface each representing a variant
+    /// (the <see cref="TranslateFileTransform"/> implementation is used by default)
+    /// </param>
+    /// <param name="cleanOutput">flag specifying if the output directory should be clean before generating files</param>
+    /// <returns>the output directory</returns>
+    public string Generate(IModOutputGenerator outputGenerator, FileTransforms fileTransforms, bool cleanOutput = true)
+    {
         var outputDir = Path.Combine(config.OutputDirectory, config.ModName);
-        // create a translation transform, if necessary
-        fileTransform ??= new TranslateFileTransform(localization);
+
         // clean the output directory, if necessary
         if (cleanOutput && Directory.Exists(outputDir))
         {
@@ -37,16 +54,32 @@ public class MagicLoaderMod(ILocalizationProvider localization, AppConfig config
         // process all the supported languages
         foreach (var language in localization.SupportedLanguages)
         {
-            // process all the file entries from the configuration that contain at least one entry
-            foreach (var (filename, magicLoaderFile) in config.ModFiles.Where(f => f.Value.HasEntries()))
+            var singleVariant = fileTransforms.Count == 1;
+
+            foreach (var (variant, fileTransform) in fileTransforms)
             {
-                // transform the current file
-                var transformedFile = fileTransform.Transform(language, magicLoaderFile);
-                // add the file to the output generator
-                outputGenerator.AddFile(filename, transformedFile);
+                // create the default translation transform, if necessary
+                var transform = fileTransform ?? new TranslateFileTransform(localization);
+                var outputName = $"{transform.GetOutputName(config.ModName, language)}";
+
+                if (singleVariant == false && string.IsNullOrEmpty(variant) == false)
+                {
+                    outputName += $"_{variant}";
+                }
+                // process all the file entries from the configuration that contain at least one entry
+                foreach (var (filename, magicLoaderFile) in config.ModFiles.Where(f => f.Value.HasEntries()))
+                {
+                    // cleanup entries from the previous iteration
+                    magicLoaderFile.FullNames_Edit?.Clear();
+                    magicLoaderFile.FullNames?.Clear();
+                    // transform the current file
+                    var transformedFile = transform.Transform(language, magicLoaderFile);
+                    // add the file to the output generator
+                    outputGenerator.AddFile(filename, transformedFile);
+                }
+                // generate the output
+                outputGenerator.Output(outputName);
             }
-            // generate the output
-            outputGenerator.Output(fileTransform.GetOutputName(config.ModName, language));
         }
 
         return outputDir;
