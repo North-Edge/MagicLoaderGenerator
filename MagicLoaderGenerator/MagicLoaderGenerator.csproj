@@ -15,7 +15,7 @@
         <PackageProjectUrl>https://github.com/North-Edge/MagicLoaderGenerator</PackageProjectUrl>
         <RepositoryUrl>https://github.com/North-Edge/MagicLoaderGenerator</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Version>1.1.0</Version>
+        <Version>1.2.0</Version>
     </PropertyGroup>
 
     <ItemGroup>

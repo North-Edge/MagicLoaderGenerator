@@ -34,6 +34,12 @@ Default value: `MagicLoader`
 This parameter controls where the generator will output the mod file it produces.\
 >It can be a relative path to the working directory of the executable or an absolute path.
 
+### `InputDirectory`
+Default value: `Input`
+
+This parameter controls where the configuration will look for existing MagicLoader files.\
+>It can be a relative path to the working directory of the executable or an absolute path.
+
 ### Localization
 These parameters control the loading of the localization data.
 
@@ -115,3 +121,12 @@ The values contain dictionaries representing the sections handled by
 and a list of localization keys as their value.
 The two supported sections are `FullNamesEditEntries` (`FullNames_Edit`) and `FullNameEntries`: (`FullNames`).\
 See [MagicLoaderFile](MagicLoaderGenerator/Filesystem/MagicLoaderFile.cs)
+
+# Changelog
+
+## Version 1.1
+- Initial stable release
+## Version 1.2
+- Add an overload to MagicLoaderMod::Generate to handle variants
+- Allow extra localization data to be added from the configuration
+- Added support to import existing localization files into the mod

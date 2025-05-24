@@ -67,13 +67,10 @@ public class MagicLoaderMod(ILocalizationProvider localization, AppConfig config
                     outputName += $"_{variant}";
                 }
                 // process all the file entries from the configuration that contain at least one entry
-                foreach (var (filename, magicLoaderFile) in config.ModFiles.Where(f => f.Value.HasEntries()))
+                foreach (var (filename, modFile) in config.ModFiles.Where(f => f.Value.HasEntries()))
                 {
-                    // cleanup entries from the previous iteration
-                    magicLoaderFile.FullNames_Edit?.Clear();
-                    magicLoaderFile.FullNames?.Clear();
                     // transform the current file
-                    var transformedFile = transform.Transform(language, magicLoaderFile);
+                    var transformedFile = transform.Transform(language, modFile);
                     // add the file to the output generator
                     outputGenerator.AddFile(filename, transformedFile);
                 }

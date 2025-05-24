@@ -14,10 +14,6 @@ public interface ILocalizationProvider
     /// The languages supported by the localization provider
     /// </summary>
     List<string> SupportedLanguages { get; }
-    /// <summary>
-    /// The prefix for fullname translation keys
-    /// </summary>
-    string FullNamePrefix { get; }
 
     /// <summary>
     /// Dictionary containing the loaded translation dictionaries as value and the language as key

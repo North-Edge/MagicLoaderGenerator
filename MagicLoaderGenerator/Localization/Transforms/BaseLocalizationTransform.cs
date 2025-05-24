@@ -1,6 +1,7 @@
 using MagicLoaderGenerator.Localization.Abstractions;
 using MagicLoaderGenerator.Filesystem.Abstractions;
 using MagicLoaderGenerator.Filesystem;
+using MagicLoaderGenerator.Localization.Providers;
 
 namespace MagicLoaderGenerator.Localization.Transforms;
 
@@ -19,7 +20,18 @@ public abstract class BaseLocalizationTransform(ILocalizationProvider localizati
     protected readonly ILocalizationProvider Localization = localization;
 
     /// <inheritdoc/>
-    public abstract MagicLoaderFile Transform(string language, MagicLoaderFile magicLoaderFile);
+    public virtual MagicLoaderFile Transform(string language, ModFile modFile)
+    {
+        var result = MagicLoaderFileFactory.Create(modFile);
+
+        if (Localization.ExtraLocalizationStrings.Count > 0)
+        {
+            // add the localization strings from the configuration
+            AddExtraLocalization(Localization, result, language);
+        }
+
+        return result;
+    }
 
     /// <inheritdoc/>
     public abstract string GetOutputName(string baseName, string language);
@@ -28,20 +40,18 @@ public abstract class BaseLocalizationTransform(ILocalizationProvider localizati
     /// Adds the extra localization loaded from the configuration to the specified file
     /// </summary>
     /// <param name="localizationProvider">an implementation of the <see cref="ILocalizationProvider"/> interface</param>
-    /// <param name="magicLoaderFile">the file to which the translations are added</param>
+    /// <param name="modFile">the file to which the translations are added</param>
     /// <param name="language">the current language</param>
-    protected static void AddExtraLocalization(ILocalizationProvider localizationProvider,
-                                               MagicLoaderFile magicLoaderFile,
-                                               string language)
+    private static void AddExtraLocalization(ILocalizationProvider localizationProvider,
+                                             MagicLoaderFile modFile, string language)
     {
-        // create a dictionary to hold the result of the transformations
-        magicLoaderFile.FullNames ??= new Dictionary<string, string>();
+        modFile.FullNames ??= [];
 
         foreach (var (key, localizations) in localizationProvider.ExtraLocalizationStrings)
         {
             if (localizations.TryGetValue(language, out var extraLocString))
             {
-                magicLoaderFile.FullNames[key] = extraLocString;
+                modFile.FullNames[key] = extraLocString;
             }
         }
     }
@@ -54,6 +64,6 @@ public abstract class BaseLocalizationTransform(ILocalizationProvider localizati
     /// <returns>the formatted line</returns>
     protected virtual string FormatLine(string language, string key)
     {
-        return $"$[[{key}]]";
+        return $"{BaseLocalizationProvider.MarkerStart}{key}{BaseLocalizationProvider.MarkerEnd}";
     }
 }

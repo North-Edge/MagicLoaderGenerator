@@ -18,6 +18,6 @@ public class ValueSuffixTransformer(ILocalizationProvider localization, string s
     protected override string FormatLine(string language, string key)
     {
         // translate the entry then add the suffix to it
-        return $"{base.FormatLine(language, key)} {suffix}";
+        return $"{Translate(language, key)} {suffix}";
     }
 }

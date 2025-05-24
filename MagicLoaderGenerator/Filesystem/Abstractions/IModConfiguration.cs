@@ -9,7 +9,7 @@ public interface IModConfiguration: IFileSystemConfiguration
     /// A mapping containing the filename of the mod files as key and
     /// the corresponding <see cref="MagicLoaderFile"/> object as value
     /// </summary>
-    public Dictionary<string, MagicLoaderFile> ModFiles { get; }
+    public Dictionary<string, ModFile> ModFiles { get; }
     /// <summary>
     /// The name of the mod
     /// </summary>

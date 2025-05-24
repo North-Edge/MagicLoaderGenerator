@@ -4,15 +4,41 @@ using Microsoft.Extensions.Configuration;
 
 namespace MagicLoaderGenerator.Filesystem;
 
-// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 // ReSharper disable ReplaceAutoPropertyWithComputedProperty
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 // ReSharper disable once ClassNeverInstantiated.Global
+// ReSharper disable once CollectionNeverUpdated.Global
+// ReSharper disable MemberCanBePrivate.Global
 /// <summary>
 /// A record holding the parameters of the application
 /// </summary>
 public record AppConfig: ILocalizationConfiguration, IModConfiguration
 {
+    /// <summary>
+    /// Default mod structure
+    /// </summary>
+    public const string DefaultModStructure = @"OblivionRemastered\Content\Dev\ObvData\Data\MagicLoader\";
+    /// <summary>
+    /// Default game localization sections to load
+    /// </summary>
+    public static readonly List<string> DefaultSections = ["ST_FullNames"];
+    /// <summary>
+    /// Default localization source
+    /// </summary>
+    public const string DefaultLocalizationSource = "Localization";
+    /// <summary>
+    /// Default output directory
+    /// </summary>
+    public const string DefaultOutputDirectory = "MagicLoader";
+    /// <summary>
+    /// Default mod name
+    /// </summary>
+    public const string DefaultModName = "MagicLoaderMod";
+    /// <summary>
+    /// Default input directory
+    /// </summary>
+    public const string DefaultInputDirectory = "Input";
+
     // ReSharper disable once MemberCanBeProtected.Global
     /// <summary>
     /// Constructor used to bind the configuration to the record
@@ -21,30 +47,44 @@ public record AppConfig: ILocalizationConfiguration, IModConfiguration
     public AppConfig(IConfiguration config)
     {
         config.Bind(this);
+
+        // attempt to import files from the Input directory
+        if (Directory.Exists(InputDirectory))
+        {
+            foreach (var file in Directory.EnumerateFiles(InputDirectory))
+            {
+                if (file.EndsWith(".json"))
+                {
+                    // add new mod entry for each JSON file found in the folder
+                    ModFiles.TryAdd(Path.GetFileName(file), new ModFile { InputFile = file });
+                }
+            }
+        }
     }
 
 #region IModStructureConfiguration implementation
     /// <inheritdoc/>
-    public virtual Dictionary<string, MagicLoaderFile> ModFiles { get; init; } = new();
+    public Dictionary<string, ModFile> ModFiles { get; init; } = [];
     /// <inheritdoc/>
-    public virtual string ModName { get; init; } = "MagicLoaderMod";
+    public string ModName { get; init; } = DefaultModName;
 #endregion
 
 #region IFilesystemConfiguration implementation
     /// <inheritdoc/>
-    public virtual string ModDirectoryStructure { get; init; }
-        = @"OblivionRemastered\Content\Dev\ObvData\Data\MagicLoader\";
+    public string ModDirectoryStructure { get; init; } = DefaultModStructure;
     /// <inheritdoc/>
-    public virtual string OutputDirectory { get; init;  } = "MagicLoader";
+    public string OutputDirectory { get; init; } = DefaultOutputDirectory;
+    /// <inheritdoc/>
+    public string InputDirectory { get; init; } = DefaultInputDirectory;
 #endregion
 
 #region ILocalizationConfiguration implementation
     /// <inheritdoc/>
     public virtual List<string>? Languages { get; init; } = null;
     /// <inheritdoc/>
-    public virtual List<string>? IncludedSections { get; init; } = [ "ST_FullNames" ];
+    public virtual List<string>? IncludedSections { get; init; } = DefaultSections;
     /// <inheritdoc/>
-    public virtual string? LocalizationSource { get; init; } = "Localization";
+    public virtual string? LocalizationSource { get; init; } = DefaultLocalizationSource;
     /// <inheritdoc/>
     public Dictionary<string, Dictionary<string, string>> Localizations { get; init; } = [];
 #endregion

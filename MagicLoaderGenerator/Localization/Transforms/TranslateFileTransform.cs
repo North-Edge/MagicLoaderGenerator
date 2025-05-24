@@ -5,6 +5,7 @@ using MagicLoaderGenerator.Filesystem;
 
 namespace MagicLoaderGenerator.Localization.Transforms;
 
+// ReSharper disable VirtualMemberNeverOverridden.Global
 /// <summary>
 /// Implementation of the <see cref="IMagicLoaderFileTransform"/> interface used
 /// to replace localization keys with their translation found in the game files
@@ -13,39 +14,80 @@ namespace MagicLoaderGenerator.Localization.Transforms;
 /// An implementation of the <see cref="ILocalizationProvider"/>
 /// interface used to load the translations strings
 /// </param>
-public class TranslateFileTransform(ILocalizationProvider localization): BaseLocalizationTransform(localization)
+public class TranslateFileTransform(ILocalizationProvider localization)
+    : BaseLocalizationTransform(localization)
 {
     /// <inheritdoc/>
-    public override MagicLoaderFile Transform(string language, MagicLoaderFile magicLoaderFile)
+    public override MagicLoaderFile Transform(string language, ModFile modFile)
     {
-        // check if the current MagicLoader file has FullNames_Edit entries to process
-        if (magicLoaderFile.FullNamesEditEntries.Count > 0)
-        {
-            // create a dictionary to hold the result of the transformations
-            magicLoaderFile.FullNames_Edit ??= new Dictionary<string, string>();
+        // perform the common transform from the base implementation
+        var result = base.Transform(language, modFile);
 
-            foreach (var entry in magicLoaderFile.FullNamesEditEntries)
+        if (result.FullNames_Edit != null)
+        {
+            foreach (var (key, translation) in result.FullNames_Edit)
             {
-                // format each entry found in the MagicLoader file
-                magicLoaderFile.FullNames_Edit[entry] = FormatLine(language, entry);
+                // format each edit entry found in the MagicLoader file
+                result.FullNames_Edit[key] = string.IsNullOrEmpty(translation) == false
+                                           ? TranslateValue(language, translation)
+                                           : FormatLine(language, key);
             }
         }
-        // check if the current MagicLoader file has FullNames entries to process
-        if (magicLoaderFile.FullNameEntries.Count > 0 || Localization.ExtraLocalizationStrings.Count > 0)
+        if (result.FullNames != null)
         {
-            // create a dictionary to hold the result of the transformations
-            magicLoaderFile.FullNames ??= new Dictionary<string, string>();
-            // add the localization strings from the configuration
-            AddExtraLocalization(Localization, magicLoaderFile, language);
-
-            foreach (var entry in magicLoaderFile.FullNameEntries)
+            foreach (var (key, translation) in result.FullNames)
             {
                 // format each entry found in the MagicLoader file
-                magicLoaderFile.FullNames[entry] = FormatLine(language, entry);
+                result.FullNames[key] = string.IsNullOrEmpty(translation) == false
+                                      ? TranslateValue(language, translation)
+                                      : FormatLine(language, key);
             }
         }
 
-        return magicLoaderFile;
+        return result;
+    }
+
+    /// <summary>
+    /// Translates the placeholders found in the specified value
+    /// </summary>
+    /// <param name="language">the current language</param>
+    /// <param name="value">the value to parse</param>
+    /// <returns>the translated value</returns>
+    protected virtual string TranslateValue(string language, string value)
+    {
+        var parts = BaseLocalizationProvider.ParseValue(value);
+        var result = string.Empty;
+
+        foreach (var part in parts)
+        {
+            if (part.StartsWith(BaseLocalizationProvider.FullNamePrefix))
+                result += FormatLine(language, part);
+            else
+                result += part;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Translates a localization string
+    /// </summary>
+    /// <param name="language">the current language</param>
+    /// <param name="key">the localization key</param>
+    /// <returns>the result of the translation</returns>
+    protected virtual string Translate(string language, string key)
+    {
+        var defaultValue = base.FormatLine(language, key);
+
+        // forward the translation to the default game localization for fullname localization strings
+        if (BaseLocalizationProvider.IsBaseLanguage(language)
+            && key.StartsWith(BaseLocalizationProvider.FullNamePrefix))
+        {
+            return defaultValue;
+        }
+
+        // retrieve the translation for the entry and default to the game localization if not found
+        return Localization.GetValueOrDefault(language, key, defaultValue) ?? defaultValue;
     }
 
     /// <inheritdoc/>
@@ -58,15 +100,6 @@ public class TranslateFileTransform(ILocalizationProvider localization): BaseLoc
     /// <inheritdoc/>
     protected override string FormatLine(string language, string key)
     {
-        var defaultValue = base.FormatLine(language, key);
-
-        // forward the translation to the default game localization for fullname localization strings
-        if (BaseLocalizationProvider.IsBaseLanguage(language) && key.StartsWith(Localization.FullNamePrefix))
-        {
-            return defaultValue;
-        }
-
-        // retrieve the translation for the entry and default to the game localization if not found
-        return Localization.GetValueOrDefault(language, key, defaultValue) ?? defaultValue;
+        return Translate(language, key);
     }
 }

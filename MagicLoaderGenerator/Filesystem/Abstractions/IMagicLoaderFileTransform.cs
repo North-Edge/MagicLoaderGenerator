@@ -13,12 +13,12 @@ namespace MagicLoaderGenerator.Filesystem.Abstractions;
 public interface IMagicLoaderFileTransform
 {
     /// <summary>
-    /// Applies a transformation to the entries of the specified <see cref="MagicLoaderFile"/>
+    /// Applies a transformation to the entries of the specified <see cref="ModFile"/>
     /// </summary>
     /// <param name="language">the language used in the transformation</param>
-    /// <param name="magicLoaderFile">the file to be transformed</param>
+    /// <param name="modFile">the file to be transformed</param>
     /// <returns>the transformed file</returns>
-    MagicLoaderFile Transform(string language, MagicLoaderFile magicLoaderFile);
+    MagicLoaderFile Transform(string language, ModFile modFile);
 
     /// <summary>
     /// Generates the name of the file output

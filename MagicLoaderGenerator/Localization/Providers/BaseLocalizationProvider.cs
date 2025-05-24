@@ -1,12 +1,38 @@
 using MagicLoaderGenerator.Localization.Abstractions;
+using System.Text.RegularExpressions;
 
 namespace MagicLoaderGenerator.Localization.Providers;
 
+// ReSharper disable MemberCanBePrivate.Global
 /// <summary>
 /// Base implementation of the <see cref="ILocalizationProvider"/> interface
 /// </summary>
-public abstract class BaseLocalizationProvider : ILocalizationProvider
+public abstract partial class BaseLocalizationProvider : ILocalizationProvider
 {
+    /// <summary>
+    /// The prefix for all localization entries
+    /// </summary>
+    public const string LocalizationPrefix = "LOC_";
+    /// <summary>
+    /// The prefix for FullName entries
+    /// </summary>
+    public const string FullNamePrefix = LocalizationPrefix + "FN_";
+    /// <summary>
+    /// The start marker for translation placeholders
+    /// </summary>
+    public const string MarkerStart = "$[[";
+    /// <summary>
+    /// The end marker for translation placeholders
+    /// </summary>
+    public const string MarkerEnd = "]]";
+
+    /// <summary>
+    /// Regular expression used to parse an existing localization string in order to find placeholders
+    /// </summary>
+    /// <returns>the regular expression generated at compilation time</returns>
+    [GeneratedRegex(@"([^$]*)?(\$\[\[)(" + LocalizationPrefix +@"[A-Za-z0-9_]+)(\]\])([^$]*)?")]
+    private static partial Regex TranslationKeyRegex();
+
     /// <summary>
     /// The source of  the localization data (could be a directory or database connection string).
     /// If no value is specified, the localization data is assumed to be located in the default directory.
@@ -16,8 +42,6 @@ public abstract class BaseLocalizationProvider : ILocalizationProvider
     /// The default directory relative to the working directory of the executable
     /// </summary>
     private const string DefaultDirectory = "Localization";
-    /// <inheritdoc/>
-    public string FullNamePrefix => "LOC_FN_";
     /// <summary>
     /// A list of the default languages
     /// </summary>
@@ -38,7 +62,7 @@ public abstract class BaseLocalizationProvider : ILocalizationProvider
     /// </summary>
     protected readonly Dictionary<string, Dictionary<string, string>> LocalizationStrings = new();
     /// <inheritdoc/>
-    public Dictionary<string, Dictionary<string, string>> ExtraLocalizationStrings { get; init; } = new();
+    public Dictionary<string, Dictionary<string, string>> ExtraLocalizationStrings { get; } = new();
     /// <summary>
     /// The localization configuration
     /// </summary>
@@ -111,4 +135,17 @@ public abstract class BaseLocalizationProvider : ILocalizationProvider
     /// <param name="sections">list of sections to load</param>
     /// <returns>the translation data</returns>
     protected abstract Dictionary<string, string>? LoadLocalization(string language, List<string>? sections = null);
+
+    /// <summary>
+    /// Parses a value and return text or placeholders found in the value
+    /// </summary>
+    /// <param name="value">the value to parse</param>
+    /// <returns>an enumeration of valid tokens</returns>
+    public static IEnumerable<string> ParseValue(string value)
+    {
+        // filter empty strings or markers
+        return TranslationKeyRegex().Split(value).Where(s => string.IsNullOrEmpty(s) == false
+                                                          && s != MarkerStart
+                                                          && s != MarkerEnd);
+    }
 }

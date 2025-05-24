@@ -13,4 +13,9 @@ public interface IFileSystemConfiguration
     /// The output directory used when generating the mod files
     /// </summary>
     string OutputDirectory { get; }
+    // ReSharper disable once UnusedMemberInSuper.Global
+    /// <summary>
+    /// The input directory used to import mod files
+    /// </summary>
+    string InputDirectory { get; }
 }
