@@ -16,10 +16,8 @@ public class ZipOutputGenerator(IModConfiguration configuration, IMagicLoaderFil
 {
     public override void Output(string outputName)
     {
-        var zipContent = new MemoryStream();
         var modStructure = Configuration.ModDirectoryStructure;
-        // create the ZIP archive in memory
-        using var archive = new ZipArchive(zipContent, ZipArchiveMode.Create);
+        var zipContent = new MemoryStream();
 
         // create the output directory, if necessary
         if (Directory.Exists(OutputDirectory) == false)
@@ -31,14 +29,18 @@ public class ZipOutputGenerator(IModConfiguration configuration, IMagicLoaderFil
         {
             modStructure += Configuration.ModName;
         }
-        // process all the files that were added to the generator
-        foreach (var file in Files)
+        // create the ZIP archive in memory
+        using (var archive = new ZipArchive(zipContent, ZipArchiveMode.Create))
         {
-            // serialize the file and transform the result into a byte array
-            var content = Encoding.UTF8.GetBytes(Serializer.Serialize(file.Value));
-            var filename = Path.Combine(modStructure, Serializer.Filename(file.Key));
-            // add the file to the ZIP archive
-            AddEntry(filename, content, archive);
+            // process all the files that were added to the generator
+            foreach (var file in Files)
+            {
+                // serialize the file and transform the result into a byte array
+                var content = Encoding.UTF8.GetBytes(Serializer.Serialize(file.Value));
+                var filename = Path.Combine(modStructure, Serializer.Filename(file.Key));
+                // add the file to the ZIP archive
+                AddEntry(filename, content, archive);
+            }
         }
         // write the ZIP archive to the filesystem
         File.WriteAllBytes(Path.Combine(OutputDirectory, $"{outputName}.zip"), zipContent.ToArray());

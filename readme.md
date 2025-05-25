@@ -131,3 +131,5 @@ See [MagicLoaderFile](MagicLoaderGenerator/Filesystem/MagicLoaderFile.cs)
 - Add an overload to MagicLoaderMod::Generate to handle variants
 - Allow extra localization data to be added from the configuration
 - Added support to import existing localization files into the mod
+## Version 1.2.1
+- Fix an issue with the ZIP creation in ZipOutputGenerator where the ZipArchive wasn't disposed properly before writing the stream to the filesystem
