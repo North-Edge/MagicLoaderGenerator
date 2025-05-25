@@ -4,8 +4,9 @@
 This library is intended to facilitate the generation of translation files to be used by 
 [MagicLoader](https://www.nexusmods.com/oblivionremastered/mods/1966) in order to mod Oblivion: Remastered.
 
-Project and Solution templates are available by using `dotnet new` as follows:\
-`dotnet new install NorthEdge.MagicLoaderGenerator.Templates` (first time only)\
+[Project and Solution templates](https://github.com/North-Edge/MagicLoaderGeneratorTemplates) 
+are available by using `dotnet new` as follows:\
+`dotnet new install NorthEdge.MagicLoaderGenerator.Templates` (the first time or when updating)\
 `dotnet new mlg-sln -n MyMod` for a complete solution or
 `dotnet new mlg-mod -n MyMod` for a console project only.
 
