@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace MagicLoaderGenerator.Filesystem.Abstractions;
 
 /// <summary>
@@ -21,5 +23,6 @@ public interface IModOutputGenerator
     /// Outputs all the files added to the generator
     /// </summary>
     /// <param name="outputName">the name of the output (see <see cref="IMagicLoaderFileTransform.GetOutputName"/>)</param>
-    public void Output(string outputName);
+    /// <param name="logger">optional logger</param>
+    public void Output(string outputName, ILogger? logger = null);
 }

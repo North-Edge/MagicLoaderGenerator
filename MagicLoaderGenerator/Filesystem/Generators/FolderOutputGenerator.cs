@@ -1,5 +1,6 @@
 using MagicLoaderGenerator.Filesystem.Abstractions;
 using MagicLoaderGenerator.Filesystem.Transforms;
+using Microsoft.Extensions.Logging;
 
 namespace MagicLoaderGenerator.Filesystem.Generators;
 
@@ -37,7 +38,7 @@ public class FolderOutputGenerator(IModConfiguration configuration, IMagicLoader
     }
 
     /// <inheritdoc/>
-    public virtual void Output(string outputName)
+    public virtual void Output(string outputName, ILogger? logger = null)
     {
         // the generator will write the mod files in a directory structure dictated by the mod structure
         var outputDir = Path.Combine(OutputDirectory, outputName, Configuration.ModDirectoryStructure);
@@ -47,9 +48,12 @@ public class FolderOutputGenerator(IModConfiguration configuration, IMagicLoader
         {
             outputDir += Configuration.ModName;
         }
+
+        logger?.LogInformation("Generating output to `{outputDir}`", outputDir);
         // create the output directory, if necessary
         if (Directory.Exists(outputDir) == false)
         {
+            logger?.LogDebug("Creating output directory `{outputDir}`", outputDir);
             Directory.CreateDirectory(outputDir);
         }
         // process all the files that were added to the generator
@@ -59,8 +63,11 @@ public class FolderOutputGenerator(IModConfiguration configuration, IMagicLoader
             var content = Serializer.Serialize(file.Value);
             var filename = Serializer.Filename(file.Key);
 
+            logger?.LogDebug("Serialized the content of `{file}`", filename);
+
             // write the file to the filesystem
             File.WriteAllText(Path.Combine(outputDir, filename), content);
+            logger?.LogInformation("Written the content of `{file}`", filename);
         }
         // clear the files added to the generator
         Files.Clear();

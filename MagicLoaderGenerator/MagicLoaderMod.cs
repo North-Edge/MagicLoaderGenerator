@@ -2,6 +2,7 @@ using MagicLoaderGenerator.Localization.Abstractions;
 using MagicLoaderGenerator.Filesystem.Abstractions;
 using MagicLoaderGenerator.Localization.Transforms;
 using MagicLoaderGenerator.Filesystem;
+using Microsoft.Extensions.Logging;
 
 namespace MagicLoaderGenerator;
 
@@ -13,7 +14,8 @@ using FileTransforms = Dictionary<string, IMagicLoaderFileTransform?>;
 /// </summary>
 /// <param name="localization">an implementation of the <see cref="ILocalizationProvider"/> interface</param>
 /// <param name="config">the application configuration</param>
-public class MagicLoaderMod(ILocalizationProvider localization, AppConfig config)
+/// <param name="logger">Optional logger</param>
+public class MagicLoaderMod(ILocalizationProvider localization, AppConfig config, ILogger? logger = null)
 {
     // ReSharper disable once UnusedMember.Global
     /// <summary>
@@ -44,41 +46,70 @@ public class MagicLoaderMod(ILocalizationProvider localization, AppConfig config
     /// <returns>the output directory</returns>
     public string Generate(IModOutputGenerator outputGenerator, FileTransforms fileTransforms, bool cleanOutput = true)
     {
-        var outputDir = Path.Combine(config.OutputDirectory, config.ModName);
-
-        // clean the output directory, if necessary
-        if (cleanOutput && Directory.Exists(outputDir))
+        try
         {
-            Directory.Delete(outputDir, true);
-        }
-        // process all the supported languages
-        foreach (var language in localization.SupportedLanguages)
-        {
-            var singleVariant = fileTransforms.Count == 1;
+            var outputDir = Path.Combine(config.OutputDirectory, config.ModName);
+            var transformCount = fileTransforms.Count;
 
-            foreach (var (variant, fileTransform) in fileTransforms)
+            logger?.LogInformation("Generating mod `{modName}`", config.ModName);
+            logger?.LogInformation("Output directory: `{outputDir}`", outputDir);
+
+            // clean the output directory, if necessary
+            if (cleanOutput && Directory.Exists(outputDir))
             {
-                // create the default translation transform, if necessary
-                var transform = fileTransform ?? new TranslateFileTransform(localization);
-                var outputName = $"{transform.GetOutputName(config.ModName, language)}";
-
-                if (singleVariant == false && string.IsNullOrEmpty(variant) == false)
-                {
-                    outputName += $"_{variant}";
-                }
-                // process all the file entries from the configuration that contain at least one entry
-                foreach (var (filename, modFile) in config.ModFiles.Where(f => f.Value.HasEntries()))
-                {
-                    // transform the current file
-                    var transformedFile = transform.Transform(language, modFile);
-                    // add the file to the output generator
-                    outputGenerator.AddFile(filename, transformedFile);
-                }
-                // generate the output
-                outputGenerator.Output(outputName);
+                logger?.LogDebug("Cleaning output directory `{outputDir}`", outputDir);
+                Directory.Delete(outputDir, true);
             }
-        }
 
-        return outputDir;
+            // process all the supported languages
+            foreach (var language in localization.SupportedLanguages)
+            {
+                var singleVariant = transformCount == 1;
+
+                logger?.LogInformation("Mod variant(s): {variants}", transformCount > 0
+                    ? "None"
+                    : string.Join(", ", fileTransforms.Keys));
+
+                foreach (var (variant, fileTransform) in fileTransforms)
+                {
+                    // create the default translation transform, if necessary
+                    var transform = fileTransform ?? new TranslateFileTransform(localization);
+                    var outputName = $"{transform.GetOutputName(config.ModName, language)}";
+
+                    logger?.LogInformation("Generating{variant} {outputName} using {type}",
+                        string.IsNullOrEmpty(variant) ? "" : $" variant `{variant}` of",
+                        outputName, transform.GetType().Name);
+
+                    if (singleVariant == false && string.IsNullOrEmpty(variant) == false)
+                    {
+                        outputName += $"_{variant}";
+                    }
+
+                    // process all the file entries from the configuration that contain at least one entry
+                    foreach (var (filename, modFile) in config.ModFiles.Where(f => f.Value.HasEntries()))
+                    {
+                        logger?.LogInformation("Transforming `{filename}` for language `{language}`", filename,
+                            language);
+                        // transform the current file
+                        var transformedFile = transform.Transform(language, modFile);
+                        logger?.LogDebug("Adding {filename} for language `{language}` to the output", filename,
+                            language);
+                        // add the file to the output generator
+                        outputGenerator.AddFile(filename, transformedFile);
+                    }
+
+                    logger?.LogInformation("Generating output for`{filename}`", outputName);
+                    // generate the output
+                    outputGenerator.Output(outputName, logger);
+                }
+            }
+
+            return outputDir;
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "Generating mod `{modName}` failed:\n", config.ModName);
+            throw;
+        }
     }
 }

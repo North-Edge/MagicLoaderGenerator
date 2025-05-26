@@ -1,6 +1,7 @@
 using MagicLoaderGenerator.Filesystem.Abstractions;
 using System.IO.Compression;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace MagicLoaderGenerator.Filesystem.Generators;
 
@@ -14,14 +15,18 @@ namespace MagicLoaderGenerator.Filesystem.Generators;
 public class ZipOutputGenerator(IModConfiguration configuration, IMagicLoaderFileSerializer? serializer = null)
     : FolderOutputGenerator(configuration, serializer)
 {
-    public override void Output(string outputName)
+    public override void Output(string outputName, ILogger? logger = null)
     {
         var modStructure = Configuration.ModDirectoryStructure;
+        var zipFilename = $"{outputName}.zip";
         var zipContent = new MemoryStream();
+
+        logger?.LogInformation("Generating output to `{outputDir}`", OutputDirectory);
 
         // create the output directory, if necessary
         if (Directory.Exists(OutputDirectory) == false)
         {
+            logger?.LogDebug("Creating output directory `{outputDir}`", OutputDirectory);
             Directory.CreateDirectory(OutputDirectory);
         }
         // if the mod contains more than one file, group them in a directory matching the mod name
@@ -29,6 +34,10 @@ public class ZipOutputGenerator(IModConfiguration configuration, IMagicLoaderFil
         {
             modStructure += Configuration.ModName;
         }
+
+        logger?.LogInformation("Creating ZIP archive `{zipFilename}`", zipFilename);
+        logger?.LogDebug("Mod structure:`{modStructure}`", modStructure);
+
         // create the ZIP archive in memory
         using (var archive = new ZipArchive(zipContent, ZipArchiveMode.Create))
         {
@@ -38,12 +47,16 @@ public class ZipOutputGenerator(IModConfiguration configuration, IMagicLoaderFil
                 // serialize the file and transform the result into a byte array
                 var content = Encoding.UTF8.GetBytes(Serializer.Serialize(file.Value));
                 var filename = Path.Combine(modStructure, Serializer.Filename(file.Key));
+
+                logger?.LogDebug("Serialized the content of `{file}`", file.Key);
                 // add the file to the ZIP archive
                 AddEntry(filename, content, archive);
+                logger?.LogInformation("Added `{file}` to the ZIP archive", file.Key);
             }
         }
         // write the ZIP archive to the filesystem
-        File.WriteAllBytes(Path.Combine(OutputDirectory, $"{outputName}.zip"), zipContent.ToArray());
+        File.WriteAllBytes(Path.Combine(OutputDirectory, zipFilename), zipContent.ToArray());
+        logger?.LogInformation("Written the content of ZIP archive `{file}`", zipFilename);
         // clear the files added to the generator
         Files.Clear();
     }
