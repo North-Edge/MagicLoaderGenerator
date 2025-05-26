@@ -60,7 +60,7 @@ public abstract partial class BaseLocalizationProvider : ILocalizationProvider
     /// <summary>
     /// Dictionary containing the loaded translation dictionaries as value and the language as key
     /// </summary>
-    protected readonly Dictionary<string, Dictionary<string, string>> LocalizationStrings = new();
+    public readonly Dictionary<string, Dictionary<string, string>> LocalizationStrings = new();
     /// <inheritdoc/>
     public Dictionary<string, Dictionary<string, string>> ExtraLocalizationStrings { get; } = new();
     /// <summary>
