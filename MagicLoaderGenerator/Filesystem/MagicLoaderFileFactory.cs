@@ -1,4 +1,4 @@
-using MagicLoaderGenerator.Localization.Providers;
+using MagicLoaderGenerator.Localization;
 using System.Text.Json;
 
 namespace MagicLoaderGenerator.Filesystem;
@@ -10,14 +10,24 @@ public static class MagicLoaderFileFactory
     /// </summary>
     /// <param name="entries">the localization keys</param>
     /// <returns>the entries if any localization</returns>
-    private static Dictionary<string, string>? CreateEntries(List<string> entries)
+    private static Dictionary<string, Dictionary<string, string>> GroupEntries(IList<string> entries)
     {
-        if (entries.Count == 0)
-            return null;
-        // only strings starting with LOC_FN_ are supported
-        return entries.Where(e => e.StartsWith(BaseLocalizationProvider.FullNamePrefix))
-                      .Select(e => new KeyValuePair<string, string>(e, string.Empty))
-                      .ToDictionary();
+        var result = new Dictionary<string, Dictionary<string, string>>();
+
+        foreach (var entry in entries)
+        {
+            foreach (var prefix in LocStringPrefixesEnum.Values.Where(entry.StartsWith))
+            {
+                if (result.TryGetValue(prefix, out var dictionary) == false)
+                {
+                    result[prefix] = dictionary = [];
+                }
+
+                dictionary.Add(entry, string.Empty);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -27,9 +37,47 @@ public static class MagicLoaderFileFactory
     /// <returns>a <see cref="MagicLoaderFile"/></returns>
     public static MagicLoaderFile Create(ModFile modFile)
     {
+        var groupedEntries = GroupEntries(modFile.Entries);
+        var groupedEditEntries = GroupEntries(modFile.EditEntries);
+        var localization = modFile.GlobalEdit.Count == 0 ? null
+            : modFile.GlobalEdit.Select(key => new LocalizationEntry { Key = key }).ToList();
+
+        if (localization != null && modFile.Localization is { Count: > 0 })
+        {
+            localization.AddRange(modFile.Localization);
+        }
+
         return Load(modFile.InputFile) ?? new MagicLoaderFile {
-            FullNames_Edit = CreateEntries(modFile.FullNamesEditEntries),
-            FullNames = CreateEntries(modFile.FullNameEntries)
+            AltarDynamicTexts_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.AltarDynamicTexts),
+            AltarStaticTexts_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.AltarStaticTexts),
+            HardcodedContent_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.HardcodedContent),
+            MissingEntries_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.MissingEntries),
+            ResponseTexts_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.ResponseTexts),
+            ScriptContent_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.ScriptContent),
+            AltarDynamicTexts = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.AltarDynamicTexts),
+            Descriptions_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.Descriptions),
+            AltarStaticTexts = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.AltarStaticTexts),
+            HardcodedContent = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.HardcodedContent),
+            BookContent_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.BookContent),
+            LogEntries_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.LogEntries),
+            MissingEntries = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.MissingEntries),
+            FullNames_Edit = groupedEditEntries.GetValueOrDefault(LocStringPrefixesEnum.FullNames),
+            ResponseTexts = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.ResponseTexts),
+            ScriptContent = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.ScriptContent),
+            Descriptions = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.Descriptions),
+            BookContent = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.BookContent),
+            LogEntries = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.LogEntries),
+            FullNames = groupedEntries.GetValueOrDefault(LocStringPrefixesEnum.FullNames),
+            RequiresActivePlugin = modFile.RequiresActivePlugin,
+            RequiresVersion = modFile.RequiresVersion,
+            RequiresJson = modFile.RequiresJson,
+            NewStrings = modFile.NewStrings,
+            LoadBefore = modFile.LoadBefore,
+            LoadAfter = modFile.LoadAfter,
+            NewCells = modFile.NewCells,
+            Localization = localization,
+            CellMap = modFile.CellMap,
+            Plugin = modFile.Plugin
         };
     }
 

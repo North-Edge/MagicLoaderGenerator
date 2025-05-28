@@ -1,5 +1,4 @@
 using MagicLoaderGenerator.Filesystem.Abstractions;
-using MagicLoaderGenerator.Filesystem.Transforms;
 using Microsoft.Extensions.Logging;
 
 namespace MagicLoaderGenerator.Filesystem.Generators;
@@ -11,34 +10,16 @@ namespace MagicLoaderGenerator.Filesystem.Generators;
 /// <param name="configuration">an implementation of the <see cref="IModConfiguration"/> interface</param>
 /// <param name="serializer">an implementation of the <see cref="IMagicLoaderFileSerializer"/> interface</param>
 public class FolderOutputGenerator(IModConfiguration configuration, IMagicLoaderFileSerializer? serializer = null)
-    : IModOutputGenerator
+    : BaseOutputGenerator(configuration, serializer)
 {
-    /// <summary>
-    /// The files added to the generator
-    /// </summary>
-    protected readonly Dictionary<string, MagicLoaderFile> Files = new();
-    /// <summary>
-    /// The mod configuration used by the generator
-    /// </summary>
-    protected readonly IModConfiguration Configuration = configuration;
-    /// <summary>
-    /// The base output directory of the generator
-    /// </summary>
-    protected string OutputDirectory { get; } = Path.Combine(configuration.OutputDirectory, configuration.ModName);
-    /// <summary>
-    /// The <see cref="IMagicLoaderFileSerializer"/> implementation to use to serialize the file
-    /// (defaults to <see cref="JsonFileSerializer"/> if none were passed to the constructor)
-    /// </summary>
-    protected readonly IMagicLoaderFileSerializer Serializer = serializer ?? new JsonFileSerializer();
-
     /// <inheritdoc/>
-    public virtual void AddFile(string filename, MagicLoaderFile file)
+    public override void AddFile(string filename, MagicLoaderFile file)
     {
         Files.TryAdd(filename, file);
     }
 
     /// <inheritdoc/>
-    public virtual void Output(string outputName, ILogger? logger = null)
+    public override void Output(string outputName, ILogger? logger = null)
     {
         // the generator will write the mod files in a directory structure dictated by the mod structure
         var outputDir = Path.Combine(OutputDirectory, outputName, Configuration.ModDirectoryStructure);

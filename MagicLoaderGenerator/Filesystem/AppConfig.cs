@@ -1,4 +1,3 @@
-using MagicLoaderGenerator.Localization.Abstractions;
 using MagicLoaderGenerator.Filesystem.Abstractions;
 using Microsoft.Extensions.Configuration;
 
@@ -12,20 +11,12 @@ namespace MagicLoaderGenerator.Filesystem;
 /// <summary>
 /// A record holding the parameters of the application
 /// </summary>
-public record AppConfig: ILocalizationConfiguration, IModConfiguration
+public record AppConfig: IModConfiguration
 {
     /// <summary>
     /// Default mod structure
     /// </summary>
     public const string DefaultModStructure = @"OblivionRemastered\Content\Dev\ObvData\Data\MagicLoader\";
-    /// <summary>
-    /// Default game localization sections to load
-    /// </summary>
-    public static readonly List<string> DefaultSections = ["ST_FullNames"];
-    /// <summary>
-    /// Default localization source
-    /// </summary>
-    public const string DefaultLocalizationSource = "Localization";
     /// <summary>
     /// Default output directory
     /// </summary>
@@ -76,16 +67,5 @@ public record AppConfig: ILocalizationConfiguration, IModConfiguration
     public string OutputDirectory { get; init; } = DefaultOutputDirectory;
     /// <inheritdoc/>
     public string InputDirectory { get; init; } = DefaultInputDirectory;
-#endregion
-
-#region ILocalizationConfiguration implementation
-    /// <inheritdoc/>
-    public virtual List<string>? Languages { get; init; } = null;
-    /// <inheritdoc/>
-    public virtual List<string>? IncludedSections { get; init; } = DefaultSections;
-    /// <inheritdoc/>
-    public virtual string? LocalizationSource { get; init; } = DefaultLocalizationSource;
-    /// <inheritdoc/>
-    public Dictionary<string, Dictionary<string, string>> Localizations { get; init; } = [];
 #endregion
 }

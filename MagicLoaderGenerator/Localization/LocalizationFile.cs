@@ -1,5 +1,6 @@
 namespace MagicLoaderGenerator.Localization;
 
+// ReSharper disable once UnusedType.Global
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InconsistentNaming
 /// <summary>

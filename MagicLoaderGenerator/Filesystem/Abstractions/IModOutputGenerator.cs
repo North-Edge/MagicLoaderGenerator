@@ -22,7 +22,7 @@ public interface IModOutputGenerator
     /// <summary>
     /// Outputs all the files added to the generator
     /// </summary>
-    /// <param name="outputName">the name of the output (see <see cref="IMagicLoaderFileTransform.GetOutputName"/>)</param>
+    /// <param name="outputName">the name of the output</param>
     /// <param name="logger">optional logger</param>
     public void Output(string outputName, ILogger? logger = null);
 }
